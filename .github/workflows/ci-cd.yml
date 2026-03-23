@@ -1,5 +1,6 @@
 name: CI/CD for Shopping Site (Frontend + Backend)
 
+
 on:
   push:
     branches:
@@ -37,12 +38,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-
-      # -------------------------
-      # Verify AWS Identity (ADDED)
-      # -------------------------
-      - name: 🔍 Verify AWS identity
-        run: aws sts get-caller-identity
 
       # -------------------------
       # ECR Login
@@ -116,6 +111,82 @@ jobs:
       # -------------------------
       - name: 📦 Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
+
+      # -------------------------
+      # Scan FRONTEND images
+      # -------------------------
+      # - name: 🔍 Scan Frontend Images in ECR
+      #   run: |
+      #     set -e
+      #     IMAGE_TAG="${GITHUB_SHA}"
+
+      #     echo "🔍 Scanning FRONTEND images..."
+
+      #     for service in $FRONTEND_SERVICES; do
+      #       REPO_NAME="shopping-site-$service"
+
+      #       echo "➡️ Starting scan for $REPO_NAME"
+
+      #       aws ecr start-image-scan \
+      #         --repository-name $REPO_NAME \
+      #         --image-id imageTag=$IMAGE_TAG || true
+
+      #       aws ecr wait image-scan-complete \
+      #         --repository-name $REPO_NAME \
+      #         --image-id imageTag=$IMAGE_TAG
+
+      #       FINDINGS=$(aws ecr describe-image-scan-findings \
+      #         --repository-name $REPO_NAME \
+      #         --image-id imageTag=$IMAGE_TAG \
+      #         --query 'imageScanFindings.findingSeverityCounts' \
+      #         --output json)
+
+      #       echo "📄 $REPO_NAME scan results: $FINDINGS"
+
+      #       HIGH=$(echo "$FINDINGS" | jq '.HIGH // 0')
+      #       CRITICAL=$(echo "$FINDINGS" | jq '.CRITICAL // 0')
+
+      #       if [ "$HIGH" -gt 0 ] || [ "$CRITICAL" -gt 0 ]; then
+      #         echo "❌ Vulnerabilities found in $REPO_NAME"
+      #         exit 1
+      #       fi
+      #     done
+
+      #     echo "✅ All frontend images passed scan"
+
+      # # -------------------------
+      # # Scan BACKEND image
+      # # -------------------------
+      # - name: 🔍 Scan Backend Image in ECR
+      #   run: |
+      #     set -e
+      #     IMAGE_TAG="${GITHUB_SHA}"
+
+      #     aws ecr start-image-scan \
+      #       --repository-name shopping-site-backend \
+      #       --image-id imageTag=$IMAGE_TAG || true
+
+      #     aws ecr wait image-scan-complete \
+      #       --repository-name shopping-site-backend \
+      #       --image-id imageTag=$IMAGE_TAG
+
+      #     FINDINGS=$(aws ecr describe-image-scan-findings \
+      #       --repository-name shopping-site-backend \
+      #       --image-id imageTag=$IMAGE_TAG \
+      #       --query 'imageScanFindings.findingSeverityCounts' \
+      #       --output json)
+
+      #     echo "📄 Backend scan results: $FINDINGS"
+
+      #     HIGH=$(echo "$FINDINGS" | jq '.HIGH // 0')
+      #     CRITICAL=$(echo "$FINDINGS" | jq '.CRITICAL // 0')
+
+      #     if [ "$HIGH" -gt 0 ] || [ "$CRITICAL" -gt 0 ]; then
+      #       echo "❌ Vulnerabilities found in backend image"
+      #       exit 1
+      #     fi
+
+      #     echo "✅ Backend image passed scan"
 
       # -------------------------
       # Prevent CI loop
